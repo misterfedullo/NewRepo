@@ -1,0 +1,33 @@
+' tagliate per verifica
+
+ Private Sub EseguiStatistica(startIndex As Integer, endIndex As Integer)
+     Try
+         ' Cicla attraverso il range di record specificato
+         For i As Integer = startIndex To endIndex
+             If i >= DataGridView1.Rows.Count OrElse i < 0 Then
+                 Continue For ' Ignora indici fuori dai limiti
+             End If
+
+             Dim row As DataGridViewRow = DataGridView1.Rows(i)
+             If row IsNot Nothing AndAlso Not row.IsNewRow Then
+                 Try
+                     ' Esegui i calcoli statistici
+                     Dim uscite As Double = CDbl(row.Cells(1).Value)
+                     Dim frequenza As Double = CDbl(row.Cells(4).Value) / 100
+                     Dim ritardoAttuale As Double = CDbl(row.Cells(2).Value)
+                     Dim rapportoRitardo As Double = CalcolaRapportoRitardo(ritardoAttuale, CDbl(row.Cells(3).Value))
+
+                     ' Aggiorna DataGridStat con i risultati statistici
+                     AggiornaDataGridStat(i, uscite, frequenza, ritardoAttuale, rapportoRitardo)
+
+                 Catch ex As Exception
+                     ' Ignora righe con dati non validi
+                     AggiornaLog($"Riga {i} ignorata: {ex.Message}")
+                 End Try
+             End If
+         Next
+
+     Catch ex As Exception
+         AggiornaLog($"Errore durante il calcolo statistico: {ex.Message}")
+     End Try
+ End Sub

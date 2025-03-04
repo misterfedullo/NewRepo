@@ -1,0 +1,123 @@
+Private Sub bgw_DoWork(sender As Object, e As DoWorkEventArgs) Handles bgw.DoWork
+    Try
+        ' Leggi i valori di input dai TextBox
+        Dim startRecord As Integer = CInt(TextBox1.Text)
+        Dim userEndRecord As Integer = CInt(TextBox2.Text) - 1 ' Valore specificato dall'utente
+        Dim totalRecords As Integer = DataGridView1.Rows.Count - 1 ' Numero totale di record disponibili
+
+        ' Dimensione del blocco statistico (range specificato dagli utenti)
+        Dim blockSize As Integer = endRecord - startRecord + 1
+        Dim currentStart As Integer = startRecord
+        Dim lastValidPrediction As List(Of Integer) = Nothing ' Variabile per memorizzare l'ultima previsione valida
+
+        While currentStart <= totalRecords
+            ' Definisci gli indici del blocco corrente
+            Dim startIndex As Integer = currentStart
+            Dim endIndex As Integer = Math.Min(currentStart + blockSize - 1, totalRecords)
+
+            ' Log per debugging
+            AggiornaLog($"Elaborazione blocco {startIndex}-{endIndex}...")
+
+            ' Esegui il codice statistico per il blocco corrente
+            EseguiCodiceStatistico(startIndex, endIndex)
+
+            ' Prepara i dati per l'addestramento
+            Dim dati As Tuple(Of Double()(), Integer()) = PreparaDati(startIndex, endIndex)
+
+            If dati IsNot Nothing Then
+                ' Addestra il modello con i dati del blocco corrente
+                AddestraModello(dati)
+
+                ' Genera la previsione per il blocco corrente
+                Dim previsioni As List(Of Integer) = GeneraPrevisioni()
+                If previsioni IsNot Nothing AndAlso previsioni.Count > 0 Then
+                    AggiornaLog($"Numeri previsti per il blocco {startIndex}-{endIndex}: {String.Join(", ", previsioni)}")
+                    lastValidPrediction = previsioni ' Memorizza l'ultima previsione valida
+                Else
+                    AggiornaLog("Impossibile generare previsioni per il blocco corrente.")
+                End If
+            Else
+                AggiornaLog($"Nessun dato valido trovato per il blocco {startIndex}-{endIndex}. Saltato.")
+            End If
+
+            ' Passa al prossimo blocco
+            currentStart += blockSize
+
+            ' Se il prossimo blocco supera il numero totale di record disponibili, esci dal ciclo
+            If currentStart + blockSize - 1 > totalRecords Then
+                Exit While
+            End If
+        End While
+
+        ' Mostra la previsione finale
+        If lastValidPrediction IsNot Nothing Then
+            AggiornaLog($"Previsione finale basata sul penultimo blocco: {String.Join(", ", lastValidPrediction)}")
+        Else
+            AggiornaLog("Nessuna previsione valida generata durante l'elaborazione.")
+        End If
+
+        ' Conferma il completamento della routine
+        AggiornaLog("Elaborazione e previsione completate.")
+
+    Catch ex As Exception
+        ' Gestisci eventuali errori
+        AggiornaLog($"Errore durante l'esecuzione: {ex.Message}")
+    End Try
+End Sub
+
+' Metodo per eseguire il codice statistico
+Private Sub EseguiCodiceStatistico(startIndex As Integer, endIndex As Integer)
+    ' Aggiorna TextBox1 e TextBox2 con i nuovi valori di start e end
+    AggiornaTextBox(TextBox1, startIndex.ToString())
+    AggiornaTextBox(TextBox2, (endIndex + 1).ToString()) ' +1 perché TextBox2 rappresenta il record finale +1
+
+    ' Richiama il codice statistico associato a Button6_Click
+    SimulaClicButton6()
+End Sub
+
+' Metodo per simulare il clic su Button6
+Private Sub SimulaClicButton6()
+    ' Usa Invoke per simulare il clic su Button6 sul thread principale
+    Button6.Invoke(Sub() Button6.PerformClick())
+End Sub
+
+' Metodo per aggiornare i TextBox in modo sicuro
+Private Sub AggiornaTextBox(textBox As TextBox, valore As String)
+    If textBox.InvokeRequired Then
+        ' Se siamo in un thread secondario, usa Invoke
+        textBox.Invoke(Sub() textBox.Text = valore)
+    Else
+        ' Altrimenti, aggiorna direttamente
+        textBox.Text = valore
+    End If
+End Sub
+
+Elaborazione blocco 1-207...Errore durante l'esecuzione: Index non compreso nell'intervallo. Richiesto valore non negativo e minore della dimensione della raccolta.
+Nome parametro: index
+
+Private Function PreparaDati(startIndex As Integer, endIndex As Integer) As Tuple(Of Double()(), Integer())
+    Dim X As New List(Of Double())()
+    Dim y As New List(Of Integer)()
+
+    For i As Integer = startIndex To endIndex
+        Dim row As DataGridViewRow = DataGridStat.Rows(i)
+
+Private Sub SimulaClicButton6()
+    ' Usa Invoke per simulare il clic su Button6 sul thread principale
+    Button6.Invoke(Sub() Button6.PerformClick())
+End Sub
+*******************************************************************************************************************questa
+ Private Function PreparaDati(startIndex As Integer, endIndex As Integer) As Tuple(Of Double()(), Integer())
+     Dim X As New List(Of Double())()
+     Dim y As New List(Of Integer)()
+
+     ' Verifica che gli indici siano validi
+     If startIndex < 0 OrElse endIndex >= DataGridStat.Rows.Count Then
+         AggiornaLog($"Errore: Gli indici StartIndex={startIndex} o EndIndex={endIndex} sono fuori dai limiti delle righe disponibili (Totale righe: {DataGridStat.Rows.Count}).")
+         Return Nothing
+     End If
+
+
+
+************************************
+Riga 1 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 2 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 3 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 4 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 5 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 6 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 7 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 8 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 9 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 10 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 11 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 12 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 13 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 14 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 15 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 16 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 17 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 18 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 19 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 20 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 21 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 22 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 23 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 24 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 25 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 26 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 27 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 28 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 29 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 30 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 31 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 32 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 33 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 34 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 35 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 36 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 37 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 38 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 39 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 40 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 41 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 42 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 43 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 44 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 45 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 46 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 47 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 48 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.Riga 49 ignorata: Cast non valido dal tipo 'Date' al tipo 'Double'.

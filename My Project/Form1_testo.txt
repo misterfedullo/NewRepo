@@ -1,0 +1,536 @@
+﻿
+Imports System.Diagnostics.Eventing.Reader
+Imports System.IO
+Imports System.Reflection.Emit
+Imports System.Windows.Forms
+Imports System.Windows.Forms.VisualStyles.VisualStyleElement
+Imports System.Xml.Serialization
+
+
+Public Class Form1
+    Inherits Form
+
+    Private menuStrip1 As MenuStrip
+    Private fileToolStripMenuItem As ToolStripMenuItem
+    Private openToolStripMenuItem As ToolStripMenuItem
+    Private saveToolStripMenuItem As ToolStripMenuItem
+    Private exitToolStripMenuItem As ToolStripMenuItem
+    Public Shared DalRecord, AlRecord As Integer
+    Public UscDivisoRa(91)
+    Public UscDivisoRmax(91)
+    Public ind As Integer : Public _I90num(91) As Integer : Public Uscite(91) As Integer : Public Ritardo(91) As Integer : Public RitardoMax(91) As Integer
+    Public Frequenza(91) As Double : Public ColonnaIndice8(91) As Integer : Public ArryTestIndex(91) As Integer : Public ColonnaFrequenze(91) As Double
+    Public dato
+    Public Volte_(91) As Integer
+    Public counterRipetizioniBlocchi As Integer = 0
+    Public FineArchivio As Integer
+    Public InizioRecord, FineRecords As Integer
+    Public ProssimoInizioRecord As Integer
+    Public ProssimoFineRecord As Integer
+    Public RecordSuccessivoAlFineBlocco As Integer
+    Public blocco As Integer
+    Public EccedenzaBlocco As Integer
+    Public SegnalazionePerInterruzioneLavoro As Boolean = False
+    Public percSviluppo As Integer = 0
+    Public NumeroRecDataGridView1 As Integer
+
+
+
+    Public Sub New()
+        InitializeComponent()
+        Me.fileToolStripMenuItem = New ToolStripMenuItem()
+        Me.openToolStripMenuItem = New ToolStripMenuItem()
+        Me.saveToolStripMenuItem = New ToolStripMenuItem()
+        Me.exitToolStripMenuItem = New ToolStripMenuItem()
+
+
+    End Sub
+    Public Class ControlState
+        Public Property Name As String
+        Public Property Value As Object
+    End Class
+
+    Public Class FormState
+        Public Property Width As Integer
+        Public Property Height As Integer
+        Public Property LocationX As Integer
+        Public Property LocationY As Integer
+        Public Property Controls As List(Of ControlState)
+    End Class
+
+
+    Private Sub openToolStripMenuItem_Click(sender As Object, e As EventArgs)
+        ' Codice per aprire un file
+        Using openFileDialog As New OpenFileDialog()
+            openFileDialog.Filter = "File di testo|*.txt"
+            If openFileDialog.ShowDialog() = DialogResult.OK Then
+                ' Logica per gestire l'apertura del file
+                Dim filePath As String = openFileDialog.FileName
+                ' Ad esempio, qui puoi leggere i dati del file
+            End If
+        End Using
+    End Sub
+
+    Private Sub saveToolStripMenuItem_Click(sender As Object, e As EventArgs)
+        ' Codice per salvare un file
+        Using saveFileDialog As New SaveFileDialog()
+            saveFileDialog.Filter = "File di testo|*.txt"
+            If saveFileDialog.ShowDialog() = DialogResult.OK Then
+                Dim filePath As String = saveFileDialog.FileName
+                ' Logica per salvare i dati nel file
+            End If
+        End Using
+    End Sub
+
+    Private Sub exitToolStripMenuItem_Click(sender As Object, e As EventArgs)
+        ' Codice per uscire dall'applicazione
+        Me.Close()
+    End Sub
+
+    Private Sub btnGenerate_Click(sender As Object, e As EventArgs) Handles btnGenerate.Click
+        'Genera analisi a blocchi di records
+        DebugLog.Clear()
+        writeLog("DebugLog.Clear linea 79  " + Environment.NewLine)
+
+        SegnalazionePerInterruzioneLavoro = False
+        writeLog("  SegnalazionePerInterruzioneLavoro = False- linea 82 " + Environment.NewLine)
+        writeLog("  ControllaDatiTextBox() - linea 86" + Environment.NewLine)
+
+        ControllaDatiTextBox()
+        If SegnalazionePerInterruzioneLavoro = True Then
+            writeLog(" SegnalazionePerInterruzioneLavoro = True ad inizio procedura btnGenerate dopo ControllaDatiTextBox" + Environment.NewLine)
+            writeLog(" TextBox1 e TextBox2 uguali a " + CInt(TextBox1.Text).ToString + " - " + CInt(TextBox2.Text).ToString + Environment.NewLine)
+            writeLog(" blocco = " + blocco.ToString + Environment.NewLine)
+            writeLog("Quindi esce dalla Sub btnGenerate" + Environment.NewLine)
+            Exit Sub
+        End If
+        GeneraRipBlocc()
+
+        counterRipetizioniBlocchi += 1
+        writeLog(" a linea 96 'counterRipetizioniBlocchi += 1' = " + counterRipetizioniBlocchi.ToString + Environment.NewLine)
+
+        Label6.Text = (FineRecords - InizioRecord) + 1
+        writeLog(" linea 99 - 'Label6.Text = (FineRecords - InizioRecord) + 1' = " + Label6.Text + Environment.NewLine)
+        '  End If
+
+        Dim Finale As Integer = NumeroRecDataGridView1 - 1
+        Dim i As Integer = 0
+        EccedenzaBlocco = Finale - ProssimoFineRecord
+        writeLog(" linea 105 'EccedenzaBlocco = Finale - ProssimoFineRecord ' = " + EccedenzaBlocco.ToString + Environment.NewLine)
+        writeLog(" linea 108 - Adesso entra nella Proc.  While EccedenzaBlocco >= 0  " + Environment.NewLine)
+        While EccedenzaBlocco >= 0
+            If EccedenzaBlocco < 0 Or counterRipetizioniBlocchi > NumeroRecDataGridView1 / blocco Then
+                SegnalazionePerInterruzioneLavoro = True
+                writeLog("linea 109 ' If EccedenzaBlocco < 0 Or counterRipetizioniBlocchi > NumeroRecDataGridView1 / blocco Then' " + Environment.NewLine)
+                writeLog("  SegnalazionePerInterruzioneLavoro = True :  Exit While quando EccedenzaBlocco = " + EccedenzaBlocco.ToString + Environment.NewLine)
+                writeLog(" e Or counterRipetizioniBlocchi = " + counterRipetizioniBlocchi.ToString + " e NumeroRecDataGridView1 / blocco = " + NumeroRecDataGridView1 / blocco.ToString + Environment.NewLine)
+                Exit While
+
+            End If
+
+            For i = ProssimoInizioRecord To ProssimoFineRecord
+                writeLog(" linea 118 - For i =  " + ProssimoInizioRecord.ToString + " - " + ProssimoFineRecord.ToString + Environment.NewLine)
+                If SegnalazionePerInterruzioneLavoro = True Then
+                    writeLog(" linea 120 - 122 -SegnalazionePerInterruzioneLavoro = True :  Exit While " + " i = " + i.ToString + Environment.NewLine)
+                    Exit While
+                End If
+                TextBox1.Text = ProssimoInizioRecord
+                TextBox2.Text = ProssimoFineRecord
+                writeLog(" linee 124-125  'TextBox1.Text ' e 'TextBox2.Text = ' " + ProssimoInizioRecord.ToString + " - " + ProssimoFineRecord.ToString + Environment.NewLine)
+                writeLog("a linea 128  avvia  Procedura  GeneraRipBlocc")
+                GeneraRipBlocc()
+
+            Next
+        End While
+        If SegnalazionePerInterruzioneLavoro = True Then
+            writeLog(" a linea 132 'If SegnalazionePerInterruzioneLavoro = True Then' = " + SegnalazionePerInterruzioneLavoro.ToString)
+            writeLog(" a linea 135  avvia Statistica() " + Environment.NewLine)
+            Statistica()
+        End If
+
+    End Sub
+
+    Private Sub CaricaEstrazioniToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles CaricaEstrazioniToolStripMenuItem.Click
+        ' Carica dati da file nel DataGridView
+        Dim filePath As String = "C:\BkArchivio\DatagridArchivio.txt"
+
+        ' Verifica se il file esiste prima di procedere
+        If Not System.IO.File.Exists(filePath) Then
+            MessageBox.Show("Il file specificato non esiste.")
+            Return
+        End If
+
+        ' Pulisci il DataGridView prima di ricaricare i dati
+        DataGridView1.Rows.Clear()
+        ' TextBox4.Text = ""
+        ' Leggi il file e aggiungi i dati nel DataGridView
+        Using sr As New StreamReader(filePath)
+            While Not sr.EndOfStream
+                Dim line As String = sr.ReadLine()
+                If Not String.IsNullOrWhiteSpace(line) Then
+                    ' Dividi la EstrattoArchivioStorico per tabulazioni
+                    Dim cells() As String = line.Split(vbTab)
+
+                    ' Controlla che ci siano abbastanza celle
+                    If cells.Length >= 11 Then
+                        ' Aggiungi una nuova EstrattoArchivioStorico nel DataGridView
+                        DataGridView1.Rows.Add(Convert.ToInt32(cells(0)),               ' Id
+                                           DateTime.Parse(cells(1)),  ' DataConc
+                                           Convert.ToInt32(cells(2)), ' NumConc
+                                           Convert.ToInt32(cells(3)), ' E1
+                                           Convert.ToInt32(cells(4)), ' E2
+                                           Convert.ToInt32(cells(5)), ' E3
+                                           Convert.ToInt32(cells(6)), ' E4
+                                           Convert.ToInt32(cells(7)), ' E5
+                                           Convert.ToInt32(cells(8)), ' E6
+                                           Convert.ToInt32(cells(9)), ' Jolly
+                                           Convert.ToInt32(cells(10)) ' Superstar
+                                           )
+                    End If
+                End If
+            End While
+        End Using
+        Label4.Text = Convert.ToString(DataGridView1.Rows.Count - 1)
+        Dim successiva_ad_a_ = DataGridView1.Rows.Count - 2
+        DalRecord = 1 : AlRecord = DataGridView1.Rows.Count - 1
+        TextBox1.Text = Convert.ToString(DalRecord)
+        TextBox2.Text = Convert.ToString(AlRecord)
+        For fd As Integer = 3 To 8
+            ' TextBox4.Text += DataGridView1.Rows(successiva_ad_a_).Cells(fd).Value.ToString() + ","
+        Next
+
+        ' Scorri automaticamente alla fine del DataGridView
+        If DataGridView1.Rows.Count > 0 Then
+            DataGridView1.FirstDisplayedScrollingRowIndex = DataGridView1.Rows.Count - 1
+        End If
+
+        '   MessageBox.Show("Dati caricati con successo!")
+
+    End Sub
+
+    Private Sub Button29_Click(sender As Object, e As EventArgs) Handles Button29.Click
+        'statistiche senza routine ripetizione di blocchi di statistica
+        LeggiTextBox()
+        Statistica()
+    End Sub
+    Public Sub Statistica()
+        'statistiche senza ripetizione di blocchi
+        If SegnalazionePerInterruzioneLavoro = True Then
+            FineArchivio = DataGridView1.Rows.Count - 1
+            InizioRecord = CInt(TextBox1.Text)
+            FineRecords = CInt(TextBox2.Text)
+            If FineRecords > DataGridView1.Rows.Count - 1 Then
+                FineRecords = DataGridView1.Rows.Count - 1
+                InizioRecord = (FineRecords - blocco) + 1
+                TextBox1.Text = InizioRecord
+                TextBox1.Update()
+                TextBox2.Text = FineRecords
+                TextBox2.Update()
+                SegnalazionePerInterruzioneLavoro = False
+                LeggiTextBox()
+                GoTo saltoDaLeggiTextBox
+            End If
+        Else
+            DataGridStat.Rows.Clear()
+            FineArchivio = DataGridView1.Rows.Count - 1
+            InizioRecord = CInt(TextBox1.Text)
+            FineRecords = CInt(TextBox2.Text)
+        End If
+
+        ControllaDatiTextBox()
+saltoDaLeggiTextBox:
+        For i As Integer = InizioRecord To FineRecords - 1
+            For x As Integer = 1 To 90
+                Ritardo(x) += 1
+            Next
+            For j As Integer = 3 To 8
+                dato = CInt(DataGridView1.Rows(i).Cells(j).Value)
+                Uscite(dato) += 1
+                If RitardoMax(dato) < Ritardo(dato) Then
+                    RitardoMax(dato) = Ritardo(dato)
+                End If
+                Ritardo(dato) = 0
+            Next
+        Next
+
+        If InizioRecord <= FineRecords Then
+            ' compiliamo DataGridStat
+            Dim calcolato As Double = 0
+            Dim estratto As Integer
+            For g As Integer = 0 To 89
+                DataGridStat.Rows.Add()
+                estratto = g + 1
+                DataGridStat.Rows(g).Cells(0).Value = estratto
+                DataGridStat.Rows(g).Cells(1).Value = Uscite(estratto)
+                DataGridStat.Rows(g).Cells(2).Value = Ritardo(estratto)
+                DataGridStat.Rows(g).Cells(3).Value = RitardoMax(estratto)
+                calcolato = Ritardo(estratto) * 100 / RitardoMax(estratto)
+                DataGridStat.Rows(g).Cells(4).Value = calcolato
+            Next
+        End If
+
+        '  ProssimoInizioRecord = FineRecords + 1
+        ' ProssimoFineRecord = (ProssimoInizioRecord + blocco) - 1
+        RecordSuccessivoAlFineBlocco = ProssimoFineRecord + 1
+UscitaSub:
+    End Sub
+    Public Sub GeneraRipBlocc()
+        writeLog(" Procedura GeneraRipBlocc()" + Environment.NewLine)
+        If SegnalazionePerInterruzioneLavoro = True Then
+            writeLog("Procedura GeneraRipBlocc()" + " : " + "SegnalazionePerInterruzioneLavoro = True  ")
+            writeLog(" linea n. 266: se true Exit Sub")
+            Exit Sub
+        End If
+        DataGridStat.Rows.Clear()
+        FineArchivio = DataGridView1.Rows.Count - 1
+        InizioRecord = CInt(TextBox1.Text)
+        FineRecords = CInt(TextBox2.Text)
+        DataGridStat.Update()
+        blocco = (FineRecords - InizioRecord) + 1
+        Label6.Text = blocco.ToString
+        writeLog("linea 278 " + "  InizioRecord e FineRecords = " + InizioRecord.ToString + " - " + FineRecords.ToString + Environment.NewLine)
+        writeLog("  blocco = " + blocco.ToString + Environment.NewLine)
+        NumeroRecDataGridView1 = DataGridView1.Rows.Count - 1
+        Dim q As Integer = NumeroRecDataGridView1 / blocco
+        percSviluppo = counterRipetizioniBlocchi * 100 / blocco
+        If percSviluppo > 0 Then
+            ProgressBar1.Value = percSviluppo
+            ProgressBar1.Update()
+
+        End If
+        writeLog("Lancia ControllaDatiTextBox a linea289 " + Environment.NewLine)
+        ControllaDatiTextBox()
+        blocco = (FineRecords - InizioRecord) + 1
+        Label6.Text = blocco.ToString
+        writeLog(" linea 289 - blocco = " + blocco.ToString + Environment.NewLine)
+        writeLog("Linea 295-313  For i As Integer = InizioRecord To FineRecords - 1 " + Environment.NewLine)
+
+        For i As Integer = InizioRecord To FineRecords - 1
+            If FineRecords > DataGridView1.Rows.Count - 1 Then
+                writeLog(" linea 296 - FineRecords > " + DataGridView1.Rows.Count - 1)
+                writeLog("FineRecords =  " + FineRecords)
+                writeLog(" linea 299 - Exit Sub " + Environment.NewLine)
+                Exit Sub
+            End If
+            For x As Integer = 1 To 90
+                Ritardo(x) += 1
+            Next
+            For j As Integer = 3 To 8
+                dato = CInt(DataGridView1.Rows(i).Cells(j).Value)
+                Uscite(dato) += 1
+                If RitardoMax(dato) < Ritardo(dato) Then
+                    RitardoMax(dato) = Ritardo(dato)
+                End If
+                Ritardo(dato) = 0
+            Next
+        Next
+
+        If InizioRecord <= FineRecords Then
+            writeLog(" linea 315 - 331 If InizioRecord <= FineRecords :   ' compiliamo DataGridStat " + Environment.NewLine)
+
+            ' compiliamo DataGridStat
+            Dim calcolato As Double = 0
+            Dim estratto As Integer
+            For g As Integer = 0 To 89
+                DataGridStat.Rows.Add()
+                estratto = g + 1
+                DataGridStat.Rows(g).Cells(0).Value = estratto
+                DataGridStat.Rows(g).Cells(1).Value = Uscite(estratto)
+                DataGridStat.Rows(g).Cells(2).Value = Ritardo(estratto)
+                DataGridStat.Rows(g).Cells(3).Value = RitardoMax(estratto)
+                calcolato = Ritardo(estratto) * 100 / RitardoMax(estratto)
+                DataGridStat.Rows(g).Cells(4).Value = calcolato
+            Next
+        End If
+        DataGridStat.Update()
+        ProgressBar1.Update()
+
+        ProssimoInizioRecord = FineRecords + 1
+        ProssimoFineRecord = (ProssimoInizioRecord + blocco) - 1
+        RecordSuccessivoAlFineBlocco = ProssimoFineRecord + 1
+        writeLog("linee 335-337 =  " + Environment.NewLine)
+        writeLog(" ProssimoInizioRecord = " + ProssimoInizioRecord.ToString + Environment.NewLine)
+        writeLog(" ProssimoFineRecord = " + ProssimoFineRecord.ToString + Environment.NewLine)
+        writeLog(" RecordSuccessivoAlFineBlocco = " + RecordSuccessivoAlFineBlocco.ToString + Environment.NewLine)
+
+
+UscitaSub:
+        If SegnalazionePerInterruzioneLavoro = True Then
+            writeLog(" linea 345-349 : If SegnalazionePerInterruzioneLavoro = True " + Environment.NewLine)
+            writeLog("  SegnalazionePerInterruzioneLavoro =  " + SegnalazionePerInterruzioneLavoro.ToString + Environment.NewLine)
+            writeLog(" linea 350 - se true esegue  Statistica() " + Environment.NewLine)
+
+            Statistica()
+        End If
+    End Sub
+    Public Shared Sub ControllaDatiTextBox()
+        Dim valore As Integer = 0
+        Dim valore1 As Integer = 0
+        Dim valore2 As Integer = 0
+        Dim verifica1 As Integer = 0
+        Dim verifica2 As Integer = 0
+        Form1.writeLog(" For k As Integer = 1 To 90
+            Form1.Uscite(k) = 0
+        Next  - a linea 349 " + Environment.NewLine)
+
+        For k As Integer = 1 To 90
+            Form1.Uscite(k) = 0
+        Next
+        Dim inputString1 As String = Form1.TextBox1.Text
+        Dim inputString2 As String = Form1.TextBox2.Text
+        Dim result1, result2 As Double
+        Dim isNumeric1, isNumeric2 As Boolean
+        isNumeric1 = Double.TryParse(inputString1, result1)
+        isNumeric2 = Double.TryParse(inputString2, result2)
+        Form1.writeLog("inizio e fine records = " + inputString1 + " - " + inputString2)
+        If isNumeric1 And isNumeric2 Then
+            ' MessageBox.Show("Entrambi i campi contengono solo valori numerici validi.")
+            Dim numrecTextbox2 As Integer = CDbl(Form1.TextBox2.Text)
+
+            If numrecTextbox2 >= Form1.DataGridView1.Rows.Count - 1 Then
+                Form1.writeLog("Se TextBox2 >= Form1.DataGridView1.Rows.Count - 1  a linea 363 " + Environment.NewLine)
+                Form1.writeLog(" TextBox2 = " + CDbl(Form1.TextBox2.Text).ToString + " e " + " Form1.DataGridView1.Rows.Count - 1  = " + (Form1.DataGridView1.Rows.Count - 1).ToString + Environment.NewLine)
+
+                Form1.SegnalazionePerInterruzioneLavoro = True
+                Form1.writeLog(" Segnalazione errore = " + Form1.SegnalazionePerInterruzioneLavoro.ToString + " a linea 367 e dopo -> Exit Sub" + Environment.NewLine)
+                Exit Sub
+            End If
+        ElseIf Not isNumeric1 And Not isNumeric2 Then
+            Form1.writeLog(" Entrambi i campi contengono valori non numerici. " + Environment.NewLine)
+            MessageBox.Show("Entrambi i campi contengono valori non numerici.")
+        ElseIf Not isNumeric1 Then
+            Form1.writeLog(" Il campo TextBox1 contiene valori non numerici. " + Environment.NewLine)
+            MessageBox.Show("Il campo TextBox1 contiene valori non numerici.")
+
+        ElseIf Not isNumeric2 Then
+            Form1.writeLog(" Il campo TextBox2 contiene valori non numerici. " + Environment.NewLine)
+            MessageBox.Show("Il campo TextBox2 contiene valori non numerici.")
+        End If
+        If Form1.counterRipetizioniBlocchi = 0 Then
+            Form1.writeLog(" GoTo salta_la_prima_volta " + Environment.NewLine)
+            GoTo salta_la_prima_volta
+        End If
+        If Form1.ProssimoInizioRecord > 0 And Form1.ProssimoFineRecord > 0 Then
+            Form1.TextBox1.Text = Form1.ProssimoInizioRecord
+            Form1.TextBox2.Text = Form1.ProssimoFineRecord
+            Form1.TextBox1.Update()
+            Form1.TextBox2.Update()
+            Form1.writeLog(" ProssimoInizioRecord e ProssimoFineRecord = " + Form1.ProssimoInizioRecord.ToString + " - " + Form1.ProssimoFineRecord.ToString + Environment.NewLine)
+            If Form1.SegnalazionePerInterruzioneLavoro = True Then
+                Form1.writeLog(" SegnalazionePerInterruzioneLavoro = True  " + Environment.NewLine)
+                Exit Sub
+            End If
+        Else
+            Form1.writeLog("Entrambi i Textbox non contengono valori maggiori di zero : procedura ControllaDatiTextBox()" + Environment.NewLine)
+            MessageBox.Show("Entrambi i Textbox non contengono valori maggiori di zero : procedura ControllaDatiTextBox()")
+
+        End If
+
+salta_la_prima_volta:
+        Form1.writeLog("Dopo l'etichetta salta_la_prima_volta: quando CDbl(Form1.TextBox2.Text) = " + CDbl(Form1.TextBox2.Text).ToString + " " + Environment.NewLine)
+        Form1.writeLog("Contatore ripetizioni blocchi = " + Form1.counterRipetizioniBlocchi.ToString)
+    End Sub
+    Public Sub LeggiTextBox()
+        Dim isNumeric1 As Boolean = IsNumeric(TextBox1.Text)
+        Dim isNumeric2 As Boolean = IsNumeric(TextBox2.Text)
+        If isNumeric1 And isNumeric2 Then
+            ' MessageBox.Show("Entrambi i campi contengono solo valori numerici.")
+        ElseIf Not isNumeric1 And Not isNumeric2 Then
+            MessageBox.Show("Entrambi i campi contengono valori non numerici: Ora correggo")
+            TextBox1.Text = 1
+            TextBox2.Text = DataGridView1.Rows.Count - 1
+
+        ElseIf Not isNumeric1 Then
+            MessageBox.Show("Il campo TextBox1 contiene valori non numerici.Ora correggo con valori sicuri")
+            TextBox1.Text = 1
+            TextBox2.Text = DataGridView1.Rows.Count - 1
+        ElseIf Not isNumeric2 Then
+            MessageBox.Show("Il campo TextBox2 contiene valori non numerici.Ora correggo con valori sicuri")
+            TextBox1.Text = 1
+            TextBox2.Text = DataGridView1.Rows.Count - 1
+        End If
+    End Sub
+    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+        ' Clear risultanze
+        TextBox1.Text = "" : TextBox2.Text = "" : Label4.Text = "00" : Label6.Text = "00"
+        DataGridStat.Rows.Clear()
+
+    End Sub
+    Private Sub writeLog(testo As String)
+        DebugLog.AppendText(testo)
+    End Sub
+
+    '****************************SALVARE E CARICARE CON UN NOME SPECIFICO ************************
+    Private Sub SaveFormState(stateName As String)
+        Dim state As New FormState With {
+        .Width = Me.Width,
+        .Height = Me.Height,
+        .LocationX = Me.Location.X,
+        .LocationY = Me.Location.Y,
+        .Controls = New List(Of ControlState)()
+    }
+
+        For Each ctrl As System.Windows.Forms.Control In Me.Controls
+            Dim ctrlState As New ControlState With {
+            .Name = ctrl.Name,
+            .Value = GetControlValue(ctrl)
+        }
+            state.Controls.Add(ctrlState)
+        Next
+
+        Using fs As New System.IO.FileStream(stateName & ".xml", System.IO.FileMode.Create)
+            Dim serializer As New System.Xml.Serialization.XmlSerializer(GetType(FormState))
+            serializer.Serialize(fs, state)
+        End Using
+    End Sub
+
+
+
+    Private Function GetControlValue(ctrl As System.Windows.Forms.Control) As Object
+        If TypeOf ctrl Is System.Windows.Forms.TextBox Then
+            Return DirectCast(ctrl, System.Windows.Forms.TextBox).Text
+        ElseIf TypeOf ctrl Is System.Windows.Forms.CheckBox Then
+            Return DirectCast(ctrl, System.Windows.Forms.CheckBox).Checked
+        ElseIf TypeOf ctrl Is System.Windows.Forms.RadioButton Then
+            Return DirectCast(ctrl, System.Windows.Forms.RadioButton).Checked
+            ' Aggiungi qui altri tipi di controllo se necessario
+        Else
+            Return Nothing
+        End If
+    End Function
+    Private Sub RestoreFormState(stateName As String)
+        If System.IO.File.Exists(stateName & ".xml") Then
+            Using fs As New System.IO.FileStream(stateName & ".xml", System.IO.FileMode.Open)
+                Dim serializer As New System.Xml.Serialization.XmlSerializer(GetType(FormState))
+                Dim state As FormState = DirectCast(serializer.Deserialize(fs), FormState)
+
+                Me.Width = state.Width
+                Me.Height = state.Height
+                Me.Location = New System.Drawing.Point(state.LocationX, state.LocationY)
+
+                For Each ctrlState As ControlState In state.Controls
+                    Dim ctrl As System.Windows.Forms.Control = Me.Controls.Find(ctrlState.Name, True).FirstOrDefault()
+                    If ctrl IsNot Nothing Then
+                        SetControlValue(ctrl, ctrlState.Value)
+                    End If
+                Next
+            End Using
+        End If
+    End Sub
+
+    Private Sub SetControlValue(ctrl As System.Windows.Forms.Control, value As Object)
+        If TypeOf ctrl Is System.Windows.Forms.TextBox Then
+            DirectCast(ctrl, System.Windows.Forms.TextBox).Text = value.ToString()
+        ElseIf TypeOf ctrl Is System.Windows.Forms.CheckBox Then
+            DirectCast(ctrl, System.Windows.Forms.CheckBox).Checked = Convert.ToBoolean(value)
+        ElseIf TypeOf ctrl Is System.Windows.Forms.RadioButton Then
+            DirectCast(ctrl, System.Windows.Forms.RadioButton).Checked = Convert.ToBoolean(value)
+            ' Aggiungi qui altri tipi di controllo se necessario
+        End If
+    End Sub
+
+    Private Sub btnSave_Click(sender As Object, e As EventArgs) Handles btnSave.Click
+        Dim stateName As String = InputBox("Inserisci il nome per lo stato da salvare:")
+        SaveFormState(stateName)
+    End Sub
+End Class
